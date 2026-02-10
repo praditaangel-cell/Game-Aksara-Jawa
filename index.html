@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SINAU AKSARA JAWA</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Fonts: Noto Sans Javanese & Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Javanese:wght@400;700&family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #FFFBEB; /* Amber-50 */
+            overflow: hidden; /* Prevent scroll for game feel */
+            touch-action: none;
+        }
+        
+        /* Font Khusus Jawa */
+        .font-jawa {
+            font-family: 'Noto Sans Javanese', sans-serif;
+        }
+
+        /* Animasi Card Flip */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #D97706; border-radius: 4px; }
+
+        /* Background Pattern (Optional CSS Pattern) */
+        .bg-batik {
+            background-image: radial-gradient(#F59E0B 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 3s ease-in-out infinite; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- KONFIGURASI URL (Bisa diubah user) ---
+        // Biarkan kosong ('') jika ingin menggunakan default warna/tanpa musik
+        const CONFIG = {
+            bgImage: '', // Contoh: 'https://wallpapercave.com/wp/wp8836528.jpg'
+            bgMusic: '', // Contoh: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'
+        };
+
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- DATABASE MATERI ---
+        const AKSARA_LEGENA = [
+            { char: 'ꦲ', latin: 'Ha' }, { char: 'ꦤ', latin: 'Na' }, { char: 'ꦕ', latin: 'Ca' }, { char: 'ꦫ', latin: 'Ra' }, { char: 'ꦏ', latin: 'Ka' },
+            { char: 'ꦢ', latin: 'Da' }, { char: 'ꦠ', latin: 'Ta' }, { char: 'ꦱ', latin: 'Sa' }, { char: 'ꦮ', latin: 'Wa' }, { char: 'ꦭ', latin: 'La' },
+            { char: 'ꦥ', latin: 'Pa' }, { char: 'ꦝ', latin: 'Dha' }, { char: 'ꦗ', latin: 'Ja' }, { char: 'ꦪ', latin: 'Ya' }, { char: 'ꦚ', latin: 'Nya' },
+            { char: 'ꦩ', latin: 'Ma' }, { char: 'ꦒ', latin: 'Ga' }, { char: 'ꦧ', latin: 'Ba' }, { char: 'ꦛ', latin: 'Tha' }, { char: 'ꦔ', latin: 'Nga' }
+        ];
+
+        const SANDHANGAN = [
+            { char: 'ꦶ', latin: 'Wulu (i)' }, { char: 'ꦸ', latin: 'Suku (u)' }, { char: 'ꦼ', latin: 'Pepet (e)' }, 
+            { char: 'ꦺ', latin: 'Taling (é)' }, { char: 'ꦺꦴ', latin: 'Taling Tarung (o)' },
+            { char: 'ꦃ', latin: 'Wignyan (h)' }, { char: 'ꦁ', latin: 'Cecak (ng)' }, { char: 'ꦂ', latin: 'Layar (r)' }, { char: '꧀', latin: 'Pangkon' }
+        ];
+
+        // Simulasi Pasangan (Untuk visualisasi)
+        const PASANGAN = [
+            { char: '꧀ꦲ', latin: 'Pasangan Ha' }, { char: '꧀ꦤ', latin: 'Pasangan Na' }, { char: '꧀ꦕ', latin: 'Pasangan Ca' },
+            { char: '꧀ꦫ', latin: 'Pasangan Ra' }, { char: '꧀ꦏ', latin: 'Pasangan Ka' }, { char: '꧀ꦢ', latin: 'Pasangan Da' },
+            { char: '꧀ꦠ', latin: 'Pasangan Ta' }, { char: '꧀ꦱ', latin: 'Pasangan Sa' }, { char: '꧀ꦮ', latin: 'Pasangan Wa' },
+            { char: '꧀ꦭ', latin: 'Pasangan La' }
+        ];
+
+        const TULADHA = [
+            { char: 'ꦱꦺꦒ', latin: 'Sega' }, { char: 'ꦠꦸꦏꦸ', latin: 'Tuku' }, { char: 'ꦧꦸꦏꦸ', latin: 'Buku' },
+            { char: 'ꦱꦥꦶ', latin: 'Sapi' }, { char: 'ꦩꦠ', latin: 'Mata' }, { char: 'ꦗꦫꦤ꧀', latin: 'Jaran' }
+        ];
+
+        const QUIZ_DATA = [
+            { q: "Apa wacane aksara iki: ꦱꦥꦶ ?", a: "Sapi", opts: ["Sapa", "Sapi", "Sopir", "Sapu"], level: "Mudah" },
+            { q: "Aksara jawa kanggo 'Mata' yaiku...", a: "ꦩꦠ", opts: ["ꦩꦠ", "ꦭꦫ", "ꦫꦗ", "ꦏꦕ"], level: "Mudah" },
+            { q: "Sandhangan swara 'i' diarani...", a: "Wulu", opts: ["Wulu", "Suku", "Pepet", "Taling"], level: "Sedang" },
+            { q: "Wacane: ꦧꦥꦏ꧀ꦠꦶꦤ꧀ꦢꦏ꧀", a: "Bapak tindak", opts: ["Bapak turu", "Bapak tindak", "Ibu tindak", "Adhik tiba"], level: "Sedang" },
+            { q: "Pasangan 'Ka' digunakake yen...", a: "Aksara sakdurunge mati", opts: ["Aksara sakdurunge urip", "Aksara sakdurunge mati", "Ing ngarep ukara", "Ing pungkasan ukara"], level: "Susah" }
+        ];
+
+        const ORDER_DATA = [
+            { words: ["ꦲ", "ꦤ", "ꦕ", "ꦫ", "ꦏ"], target: ["ꦲ", "ꦤ", "ꦕ", "ꦫ", "ꦏ"], hint: "Urutan 5 Aksara Pertama" },
+            { words: ["ꦏꦸ", "ꦠꦸ", "ꦧꦸ"], target: ["ꦠꦸ", "ꦏꦸ", "ꦧꦸ", "ꦏꦸ"], hint: "Tuku Buku (Beli Buku)" },
+            { words: ["ꦗ", "ꦫ", "ꦤ꧀"], target: ["ꦗ", "ꦫ", "ꦤ꧀"], hint: "Jaran (Kuda)" },
+            { words: ["ꦱꦺ", "ꦒ", "ꦒꦺꦴ", "ꦫꦺꦁ"], target: ["ꦱꦺ", "ꦒ", "ꦒꦺꦴ", "ꦫꦺꦁ"], hint: "Sega Goreng" }
+        ];
+
+        // --- AUDIO ENGINE ---
+        const playSound = (type) => {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            const now = ctx.currentTime;
+            if (type === 'correct') { // Ting
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523, now);
+                osc.frequency.exponentialRampToValueAtTime(1046, now + 0.1);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'wrong') { // Buzz
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'click') { // Click
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, now);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            }
+        };
+
+        // --- COMPONENTS ---
+
+        const Icon = ({ name, size = 24, className }) => {
+            React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
+        };
+
+        const Button = ({ children, onClick, color = "blue", className = "", size = "md", disabled = false }) => {
+            const themes = {
+                blue: "bg-blue-500 hover:bg-blue-600 border-blue-700 text-white",
+                green: "bg-green-500 hover:bg-green-600 border-green-700 text-white",
+                orange: "bg-orange-500 hover:bg-orange-600 border-orange-700 text-white",
+                red: "bg-red-500 hover:bg-red-600 border-red-700 text-white",
+                purple: "bg-purple-500 hover:bg-purple-600 border-purple-700 text-white",
+                gray: "bg-gray-400 border-gray-600 text-gray-100 cursor-not-allowed"
+            };
+            const sizes = { sm: "px-3 py-1 text-sm", md: "px-6 py-2 text-lg", lg: "px-8 py-4 text-xl font-bold" };
+            
+            return (
+                <button 
+                    disabled={disabled}
+                    onClick={() => { if(!disabled) { playSound('click'); onClick && onClick(); } }}
+                    className={`${disabled ? themes.gray : themes[color]} ${sizes[size]} border-b-4 rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 ${className}`}
+                >
+                    {children}
+                </button>
+            );
+        };
+
+        const Card = ({ front, back }) => {
+            const [flipped, setFlipped] = useState(false);
+            return (
+                <div className="group h-48 w-full perspective-1000 cursor-pointer" onClick={() => setFlipped(!flipped)}>
+                    <div className={`relative w-full h-full text-center transition-transform duration-500 transform-style-3d ${flipped ? 'rotate-y-180' : ''}`}>
+                        <div className="absolute w-full h-full bg-white rounded-xl shadow-md border-2 border-orange-200 backface-hidden flex flex-col items-center justify-center p-2">
+                            <span className="text-6xl font-jawa text-gray-800">{front}</span>
+                            <span className="text-xs text-orange-400 mt-2 font-bold">SENTUH KARTU</span>
+                        </div>
+                        <div className="absolute w-full h-full bg-orange-100 rounded-xl shadow-md border-2 border-orange-400 backface-hidden rotate-y-180 flex flex-col items-center justify-center p-2">
+                            <span className="text-2xl font-bold text-orange-800">{back}</span>
+                            <span className="text-4xl font-jawa mt-2 text-orange-300 opacity-50">{front}</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const Modal = ({ show, title, children, color = "white" }) => {
+            if (!show) return null;
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className={`bg-${color} rounded-3xl shadow-2xl p-6 max-w-md w-full border-4 border-orange-400 animate-float`}>
+                        <h2 className="text-3xl font-bold text-center mb-4 text-orange-900">{title}</h2>
+                        <div>{children}</div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- SCREENS ---
+
+        const SplashScreen = ({ onStart }) => (
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-orange-100 to-amber-200 p-4 text-center">
+                <div className="mb-8 relative">
+                    <div className="absolute -inset-4 bg-white/30 rounded-full blur-xl animate-pulse"></div>
+                    <h1 className="relative text-6xl md:text-8xl font-jawa font-bold text-orange-800 drop-shadow-md mb-2">ꦱꦶꦤꦲꦸ</h1>
+                    <h2 className="relative text-3xl md:text-5xl font-extrabold text-orange-900">SINAU AKSARA JAWA</h2>
+                </div>
+                <div className="bg-white/60 p-4 rounded-xl backdrop-blur-sm mb-10 border border-orange-300">
+                    <p className="text-orange-900 font-semibold text-sm uppercase tracking-widest">Karakit dening</p>
+                    <p className="text-xl font-bold text-orange-800">Pradita Angel Putri Admojo</p>
+                </div>
+                <Button onClick={onStart} size="lg" color="green" className="w-64 animate-bounce">
+                    MULAI <Icon name="play-circle" />
+                </Button>
+            </div>
+        );
+
+        const MenuScreen = ({ onNavigate, audioEnabled, toggleAudio }) => {
+            const menus = [
+                { id: 'study', title: 'Sinau (Belajar)', icon: 'book-open', color: 'blue', desc: 'Flashcard Materi' },
+                { id: 'catch', title: 'Nangkep Aksara', icon: 'hand', color: 'orange', desc: 'Game Ketangkasan' },
+                { id: 'quiz', title: 'Kuis Maos', icon: 'help-circle', color: 'purple', desc: 'Tes Membaca' },
+                { id: 'order', title: 'Nata Ukara', icon: 'layers', color: 'green', desc: 'Menyusun Kata' },
+            ];
+
+            return (
+                <div className="h-screen flex flex-col bg-batik bg-orange-50">
+                    <header className="p-4 flex justify-between items-center bg-white shadow-sm border-b-4 border-orange-200">
+                        <h1 className="font-bold text-xl text-orange-800 flex items-center gap-2">
+                            <Icon name="layout" /> MENU UTAMA
+                        </h1>
+                        <button onClick={toggleAudio} className={`p-2 rounded-full ${audioEnabled ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                            <Icon name={audioEnabled ? "volume-2" : "volume-x"} />
+                        </button>
+                    </header>
+                    <div className="flex-1 overflow-y-auto p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                            {menus.map(m => (
+                                <button key={m.id} onClick={() => onNavigate(m.id)} 
+                                    className={`bg-white rounded-2xl p-6 shadow-md border-l-8 border-${m.color}-500 hover:scale-105 transition-transform text-left flex items-center gap-4 group`}
+                                >
+                                    <div className={`p-4 rounded-full bg-${m.color}-100 text-${m.color}-600 group-hover:rotate-12 transition-transform`}>
+                                        <Icon name={m.icon} size={32} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold text-gray-800">{m.title}</h3>
+                                        <p className="text-gray-500 text-sm">{m.desc}</p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const StudyScreen = ({ onBack }) => {
+            const [tab, setTab] = useState('aksara');
+            const data = tab === 'aksara' ? AKSARA_LEGENA : tab === 'sandhangan' ? SANDHANGAN : tab === 'pasangan' ? PASANGAN : TULADHA;
+
+            return (
+                <div className="h-screen flex flex-col bg-blue-50">
+                    <div className="bg-blue-600 p-4 text-white flex items-center gap-4 shadow-md">
+                        <Button onClick={onBack} size="sm" color="blue" className="bg-blue-700 border-none"><Icon name="arrow-left" /></Button>
+                        <h2 className="text-xl font-bold flex-1 text-center mr-12">RUANG BELAJAR</h2>
+                    </div>
+                    <div className="flex justify-center gap-2 p-4 overflow-x-auto bg-white border-b border-gray-200">
+                        {['aksara', 'sandhangan', 'pasangan', 'tuladha'].map(t => (
+                            <button key={t} onClick={() => setTab(t)} 
+                                className={`px-4 py-2 rounded-full text-sm font-bold capitalize whitespace-nowrap transition-colors ${tab === t ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                            >
+                                {t}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 max-w-6xl mx-auto pb-20">
+                            {data.map((item, idx) => (
+                                <Card key={idx} front={item.char} back={item.latin} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- GAME 1: CATCHER (NANGKEP AKSARA) ---
+        const CatchGame = ({ onBack }) => {
+            const [mode, setMode] = useState(null); // '1P' or '2P'
+            const [gameState, setGameState] = useState({ 
+                p1: { score: 0, lives: 3, x: 50 }, 
+                p2: { score: 0, lives: 3, x: 50 },
+                timer: 90,
+                active: false,
+                gameOver: false,
+                objects: [],
+                target: null 
+            });
+            const gameRef = useRef(null);
+
+            const startGame = (selectedMode) => {
+                const target = AKSARA_LEGENA[Math.floor(Math.random() * AKSARA_LEGENA.length)];
+                setMode(selectedMode);
+                setGameState({
+                    p1: { score: 0, lives: 3, x: 50 },
+                    p2: { score: 0, lives: 3, x: 50 },
+                    timer: 90,
+                    active: true,
+                    gameOver: false,
+                    objects: [],
+                    target: target
+                });
+            };
+
+            // Game Logic Loop
+            useEffect(() => {
+                if (!gameState.active || gameState.gameOver) return;
+
+                const interval = setInterval(() => {
+                    setGameState(prev => {
+                        // Timer logic
+                        if (prev.timer <= 0 || (mode === '1P' && prev.p1.lives <= 0) || (mode === '2P' && prev.p1.lives <= 0 && prev.p2.lives <= 0)) {
+                            return { ...prev, active: false, gameOver: true };
+                        }
+
+                        // Spawn logic
+                        let newObjs = [...prev.objects];
+                        if (Math.random() < 0.05) {
+                            const isTarget = Math.random() < 0.4;
+                            const charData = isTarget ? prev.target : AKSARA_LEGENA[Math.floor(Math.random() * AKSARA_LEGENA.length)];
+                            newObjs.push({
+                                id: Date.now() + Math.random(),
+                                x: Math.random() * 90 + 5, // 5-95%
+                                y: -10,
+                                char: charData.char,
+                                isTarget: charData.latin === prev.target.latin
+                            });
+                        }
+
+                        // Physics & Collision
+                        let nextP1 = { ...prev.p1 };
+                        let nextP2 = { ...prev.p2 };
+                        let nextTarget = prev.target;
+
+                        newObjs = newObjs.map(o => ({ ...o, y: o.y + 1.5 })).filter(o => {
+                            let caught = false;
+                            
+                            // Check Collision P1
+                            if (o.y > 85 && o.y < 95 && Math.abs(o.x - prev.p1.x) < 10 && prev.p1.lives > 0) {
+                                caught = true;
+                                if (o.isTarget) {
+                                    nextP1.score += 10;
+                                    playSound('correct');
+                                    nextTarget = AKSARA_LEGENA[Math.floor(Math.random() * AKSARA_LEGENA.length)];
+                                } else {
+                                    nextP1.lives -= 1;
+                                    playSound('wrong');
+                                }
+                            }
+                            
+                            // Check Collision P2 (If active)
+                            if (mode === '2P' && !caught && o.y > 85 && o.y < 95 && Math.abs(o.x - prev.p2.x) < 10 && prev.p2.lives > 0) {
+                                caught = true;
+                                if (o.isTarget) {
+                                    nextP2.score += 10;
+                                    playSound('correct');
+                                    nextTarget = AKSARA_LEGENA[Math.floor(Math.random() * AKSARA_LEGENA.length)];
+                                } else {
+                                    nextP2.lives -= 1;
+                                    playSound('wrong');
+                                }
+                            }
+
+                            return !caught && o.y < 100;
+                        });
+
+                        return {
+                            ...prev,
+                            timer: prev.timer - 0.05, // Run at 50ms interval ~ 20fps logic but timer needs slow decrement
+                            objects: newObjs,
+                            p1: nextP1,
+                            p2: nextP2,
+                            target: nextTarget
+                        };
+                    });
+                }, 50);
+
+                return () => clearInterval(interval);
+            }, [gameState.active, gameState.gameOver, mode]);
+
+            // Timer display update separately to avoid jitter
+            const displayTimer = Math.ceil(gameState.timer);
+
+            const movePlayer = (player, dir) => {
+                setGameState(prev => {
+                    const pKey = player === 1 ? 'p1' : 'p2';
+                    if (prev[pKey].lives <= 0) return prev;
+                    const newX = Math.max(10, Math.min(90, prev[pKey].x + dir * 10));
+                    return { ...prev, [pKey]: { ...prev[pKey], x: newX } };
+                });
+            };
+
+            // Keyboard controls
+            useEffect(() => {
+                const handleKey = (e) => {
+                    if (mode === '2P') {
+                        if (e.key === 'a') movePlayer(1, -1);
+                        if (e.key === 'd') movePlayer(1, 1);
+                        if (e.key === 'ArrowLeft') movePlayer(2, -1);
+                        if (e.key === 'ArrowRight') movePlayer(2, 1);
+                    } else {
+                        if (e.key === 'ArrowLeft' || e.key === 'a') movePlayer(1, -1);
+                        if (e.key === 'ArrowRight' || e.key === 'd') movePlayer(1, 1);
+                    }
+                };
+                window.addEventListener('keydown', handleKey);
+                return () => window.removeEventListener('keydown', handleKey);
+            }, [mode]);
+
+            if (!mode) {
+                return (
+                    <div className="h-screen bg-orange-50 flex items-center justify-center p-4">
+                        <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-md w-full border-4 border-orange-300">
+                            <h2 className="text-3xl font-bold mb-6 text-orange-800">Pilih Mode Permainan</h2>
+                            <div className="grid grid-cols-1 gap-4">
+                                <Button onClick={() => startGame('1P')} color="blue" size="lg">1 Pemain (Belajar)</Button>
+                                <Button onClick={() => startGame('2P')} color="red" size="lg">2 Pemain (Versus)</Button>
+                                <Button onClick={onBack} color="gray" size="md">Kembali</Button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const GameBoard = ({ playerIdx, state, isSplit }) => (
+                <div className={`relative h-full overflow-hidden bg-gray-900 border-x-2 border-gray-700 ${isSplit ? 'w-1/2' : 'w-full max-w-2xl mx-auto'}`}>
+                    {/* HUD */}
+                    <div className="absolute top-0 left-0 right-0 p-2 bg-black/40 text-white flex justify-between items-center z-20">
+                        <div className="flex gap-1 text-red-500">
+                            {[...Array(3)].map((_,i) => <Icon key={i} name="heart" size={16} fill={i < state.lives ? "currentColor" : "none"} className={i < state.lives ? "" : "text-gray-600"} />)}
+                        </div>
+                        <div className="font-bold text-yellow-400">Skor: {state.score}</div>
+                    </div>
+
+                    {/* Target Hint */}
+                    <div className="absolute top-12 left-1/2 transform -translate-x-1/2 bg-white/90 px-4 py-2 rounded-xl border-2 border-blue-500 z-10 text-center shadow-lg">
+                        <p className="text-xs font-bold text-gray-500 uppercase">Tangkap</p>
+                        <p className="text-2xl font-jawa font-bold">{gameState.target?.char}</p>
+                        <p className="text-sm font-bold text-blue-700">({gameState.target?.latin})</p>
+                    </div>
+                    
+                    {/* Objects */}
+                    {gameState.objects.map(o => (
+                        <div key={o.id} className="absolute w-10 h-10 bg-amber-100 rounded-full border-2 border-amber-600 flex items-center justify-center font-jawa font-bold text-lg shadow-sm transition-transform"
+                             style={{ left: `${o.x}%`, top: `${o.y}%`, transform: 'translate(-50%, -50%)' }}>
+                            {o.char}
+                        </div>
+                    ))}
+
+                    {/* Player Basket */}
+                    <div className={`absolute bottom-5 w-16 h-12 rounded-b-xl border-4 flex items-center justify-center transition-all duration-100 transform -translate-x-1/2
+                        ${state.lives > 0 ? (playerIdx === 1 ? 'bg-blue-500 border-blue-700' : 'bg-red-500 border-red-700') : 'opacity-0'}
+                    `} style={{ left: `${state.x}%` }}>
+                        <Icon name="shopping-bag" color="white" />
+                    </div>
+
+                    {/* Touch Controls Overlay */}
+                    <div className="absolute inset-0 z-30 flex">
+                        <div className="w-1/2 h-full active:bg-white/5" onClick={() => movePlayer(playerIdx, -1)}></div>
+                        <div className="w-1/2 h-full active:bg-white/5" onClick={() => movePlayer(playerIdx, 1)}></div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="h-screen flex flex-col bg-gray-800">
+                    <div className="bg-gray-900 p-2 text-white flex justify-between items-center px-4">
+                        <Button onClick={onBack} size="sm" color="red"><Icon name="x" /> Keluar</Button>
+                        <div className={`text-2xl font-mono font-bold ${displayTimer < 10 ? 'text-red-500 animate-pulse' : 'text-green-400'}`}>
+                            {displayTimer}s
+                        </div>
+                    </div>
+                    
+                    <div className="flex-1 flex relative">
+                        {mode === '1P' ? (
+                            <GameBoard playerIdx={1} state={gameState.p1} isSplit={false} />
+                        ) : (
+                            <>
+                                <GameBoard playerIdx={1} state={gameState.p1} isSplit={true} />
+                                <div className="w-1 bg-yellow-500 z-40"></div>
+                                <GameBoard playerIdx={2} state={gameState.p2} isSplit={true} />
+                            </>
+                        )}
+                    </div>
+
+                    {gameState.gameOver && (
+                        <Modal show={true} title="PERMAINAN SELESAI">
+                            <div className="text-center mb-6">
+                                {mode === '1P' ? (
+                                    <div className="text-4xl font-bold text-blue-600 mb-2">Skor: {gameState.p1.score}</div>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-blue-100 p-2 rounded-lg">
+                                            <p className="font-bold text-blue-800">Pemain 1</p>
+                                            <p className="text-3xl font-bold">{gameState.p1.score}</p>
+                                        </div>
+                                        <div className="bg-red-100 p-2 rounded-lg">
+                                            <p className="font-bold text-red-800">Pemain 2</p>
+                                            <p className="text-3xl font-bold">{gameState.p2.score}</p>
+                                        </div>
+                                        <div className="col-span-2 mt-2">
+                                            {gameState.p1.score > gameState.p2.score ? 
+                                                <span className="text-blue-600 font-bold text-xl">PEMAIN 1 MENANG!</span> :
+                                                gameState.p2.score > gameState.p1.score ?
+                                                <span className="text-red-600 font-bold text-xl">PEMAIN 2 MENANG!</span> :
+                                                <span className="text-gray-600 font-bold text-xl">SERI!</span>
+                                            }
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex justify-center gap-2">
+                                <Button onClick={() => startGame(mode)} color="green">Main Lagi</Button>
+                                <Button onClick={onBack} color="red">Menu Utama</Button>
+                            </div>
+                        </Modal>
+                    )}
+                </div>
+            );
+        };
+
+        // --- GAME 2: ORDER (NATA UKARA) ---
+        const OrderGame = ({ onBack }) => {
+            const [mode, setMode] = useState(null);
+            const [level, setLevel] = useState(0);
+            const [p1State, setP1State] = useState({ pool: [], answer: [], done: false });
+            const [p2State, setP2State] = useState({ pool: [], answer: [], done: false });
+            const [winner, setWinner] = useState(null);
+
+            const initLevel = (currLevel) => {
+                const data = ORDER_DATA[currLevel];
+                const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+                
+                setP1State({ pool: shuffle(data.words), answer: [], done: false });
+                setP2State({ pool: shuffle(data.words), answer: [], done: false });
+                setWinner(null);
+            };
+
+            useEffect(() => {
+                if (mode) initLevel(level);
+            }, [mode, level]);
+
+            const handleSelect = (player, char) => {
+                if (winner) return;
+                const set = player === 1 ? setP1State : setP2State;
+                const state = player === 1 ? p1State : p2State;
+                const target = ORDER_DATA[level].target;
+
+                // Simple check: Must select in correct order
+                const nextIdx = state.answer.length;
+                if (char === target[nextIdx]) {
+                    playSound('correct');
+                    const newAns = [...state.answer, char];
+                    const newPool = state.pool.map(c => c === char ? null : c); // Remove picked (visually)
+                    // Actually we keep pool but disable button
+                    
+                    const isDone = newAns.length === target.length;
+                    
+                    set(prev => ({ 
+                        ...prev, 
+                        answer: newAns, 
+                        done: isDone
+                    }));
+
+                    if (isDone && !winner) {
+                        playSound('correct'); // Victory sound logic here
+                        if (mode === '2P') {
+                            setWinner(player === 1 ? 'Pemain 1' : 'Pemain 2');
+                        } else {
+                            setTimeout(() => setWinner('Selesai'), 500);
+                        }
+                    }
+                } else {
+                    playSound('wrong');
+                }
+            };
+
+            if (!mode) return (
+                <div className="h-screen bg-green-50 flex items-center justify-center p-4">
+                     <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-md w-full border-4 border-green-300">
+                        <h2 className="text-3xl font-bold mb-6 text-green-800">Nata Ukara (Menyusun)</h2>
+                        <div className="grid grid-cols-1 gap-4">
+                            <Button onClick={() => setMode('1P')} color="blue" size="lg">1 Pemain</Button>
+                            <Button onClick={() => setMode('2P')} color="red" size="lg">2 Pemain (Versus)</Button>
+                            <Button onClick={onBack} color="gray" size="md">Kembali</Button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const PlayerBoard = ({ player, state, bg }) => (
+                <div className={`flex-1 ${bg} p-4 flex flex-col relative`}>
+                    <h3 className="text-center text-white font-bold mb-2">{mode === '2P' ? `Pemain ${player}` : 'Area Bermain'}</h3>
+                    <div className="bg-white/90 rounded-xl p-4 min-h-[80px] mb-4 flex gap-2 flex-wrap justify-center border-2 border-black/10 shadow-inner">
+                        {state.answer.map((char, i) => (
+                            <span key={i} className="bg-yellow-200 border-2 border-yellow-500 w-10 h-10 flex items-center justify-center rounded font-jawa font-bold text-xl animate-float">
+                                {char}
+                            </span>
+                        ))}
+                    </div>
+                    <div className="flex flex-wrap gap-3 justify-center">
+                        {state.pool.map((char, i) => {
+                            // Check count in answer to disable used ones properly (simple implementation)
+                            const usedCount = state.answer.filter(c => c === char).length;
+                            const totalCount = state.pool.filter(c => c === char).length;
+                            // This logic assumes unique characters for simplicity or handles dupes by simple counting
+                            // For this simple game, we just use index matching if we wanted robust, but simple value check is ok if correct order enforced
+                            
+                            // Better: Check if this specific rendered button (by index logic if we tracked it) is used.
+                            // Simplified: Just disable buttons if correct next char wasn't picked.
+                            return (
+                                <button key={i} onClick={() => handleSelect(player, char)}
+                                    className="bg-white hover:bg-green-100 border-b-4 border-green-600 rounded-lg w-12 h-12 text-2xl font-jawa shadow active:scale-95 disabled:opacity-50 disabled:scale-90"
+                                >
+                                    {char}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="h-screen flex flex-col">
+                    <div className="bg-green-700 p-2 text-white flex justify-between items-center px-4">
+                        <Button onClick={onBack} size="sm" color="green" className="border-none bg-green-800"><Icon name="arrow-left" /></Button>
+                        <div className="text-center">
+                            <div className="text-xs opacity-80">LEVEL {level + 1}</div>
+                            <div className="font-bold">{ORDER_DATA[level].hint}</div>
+                        </div>
+                        <div className="w-8"></div>
+                    </div>
+
+                    <div className="flex-1 flex flex-col md:flex-row">
+                        <PlayerBoard player={1} state={p1State} bg="bg-blue-500" />
+                        {mode === '2P' && (
+                            <>
+                                <div className="h-2 md:h-full w-full md:w-2 bg-yellow-400 z-10"></div>
+                                <PlayerBoard player={2} state={p2State} bg="bg-red-500" />
+                            </>
+                        )}
+                    </div>
+
+                    {winner && (
+                        <Modal show={true} title={mode === '1P' ? "HEBAT!" : `${winner} MENANG!`}>
+                            <p className="text-center mb-6">Susunan ukara bener!</p>
+                            <div className="flex justify-center gap-2">
+                                {level < ORDER_DATA.length - 1 ? (
+                                    <Button onClick={() => setLevel(level + 1)} color="green">Level Lanjut</Button>
+                                ) : (
+                                    <div className="text-green-600 font-bold">Semua Level Selesai!</div>
+                                )}
+                                <Button onClick={onBack} color="red">Keluar</Button>
+                            </div>
+                        </Modal>
+                    )}
+                </div>
+            );
+        };
+
+        // --- QUIZ SCREEN ---
+        const QuizScreen = ({ onBack }) => {
+            const [qIdx, setQIdx] = useState(0);
+            const [score, setScore] = useState(0);
+            const [finished, setFinished] = useState(false);
+            const [shuffledOpts, setShuffledOpts] = useState([]);
+
+            useEffect(() => {
+                if (qIdx < QUIZ_DATA.length) {
+                    setShuffledOpts([...QUIZ_DATA[qIdx].opts].sort(() => Math.random() - 0.5));
+                } else {
+                    setFinished(true);
+                }
+            }, [qIdx]);
+
+            const answer = (opt) => {
+                if (opt === QUIZ_DATA[qIdx].a) {
+                    setScore(score + 20);
+                    playSound('correct');
+                } else {
+                    playSound('wrong');
+                }
+                setQIdx(qIdx + 1);
+            };
+
+            if (finished) return (
+                <div className="h-screen bg-purple-50 flex items-center justify-center">
+                    <div className="bg-white p-8 rounded-3xl shadow-2xl text-center max-w-md w-full border-4 border-purple-300">
+                        <Icon name="award" size={64} className="mx-auto text-yellow-500 mb-4" />
+                        <h2 className="text-3xl font-bold text-purple-900">Kuis Selesai!</h2>
+                        <div className="text-6xl font-bold text-purple-600 my-4">{score}</div>
+                        <div className="flex justify-center gap-2">
+                            <Button onClick={() => { setQIdx(0); setScore(0); setFinished(false); }} color="purple">Ulangi</Button>
+                            <Button onClick={onBack} color="gray">Menu</Button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const q = QUIZ_DATA[qIdx] || {};
+
+            return (
+                <div className="h-screen flex flex-col bg-purple-50">
+                    <div className="bg-purple-600 p-4 text-white flex items-center">
+                        <Button onClick={onBack} size="sm" color="purple" className="bg-purple-800 border-none"><Icon name="arrow-left" /></Button>
+                        <div className="flex-1 text-center font-bold">Soal {qIdx + 1} / {QUIZ_DATA.length}</div>
+                        <span className="bg-purple-800 px-3 py-1 rounded-full text-xs">{q.level}</span>
+                    </div>
+                    <div className="flex-1 p-6 flex flex-col justify-center max-w-2xl mx-auto w-full">
+                        <div className="bg-white p-6 rounded-2xl shadow-lg border-2 border-purple-200 mb-6 text-center">
+                            <h3 className="text-2xl font-bold text-gray-800 font-jawa leading-relaxed">{q.q}</h3>
+                        </div>
+                        <div className="grid grid-cols-1 gap-4">
+                            {shuffledOpts.map((opt, i) => (
+                                <button key={i} onClick={() => answer(opt)} 
+                                    className="bg-white border-2 border-purple-100 hover:bg-purple-100 p-4 rounded-xl text-lg font-semibold text-purple-900 shadow-sm flex items-center gap-3 transition-all"
+                                >
+                                    <span className="bg-purple-200 w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold">{['A','B','C','D'][i]}</span>
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- MAIN APP COMPONENT ---
+
+        const App = () => {
+            const [screen, setScreen] = useState('splash');
+            const [audioEnabled, setAudioEnabled] = useState(true);
+            const audioRef = useRef(null);
+
+            useEffect(() => {
+                // Initialize Audio
+                if (CONFIG.bgMusic && audioEnabled) {
+                    if (!audioRef.current) audioRef.current = new Audio(CONFIG.bgMusic);
+                    audioRef.current.loop = true;
+                    audioRef.current.volume = 0.3;
+                    audioRef.current.play().catch(e => console.log("Audio autoplay prevented"));
+                } else if (audioRef.current) {
+                    audioRef.current.pause();
+                }
+            }, [audioEnabled]);
+
+            return (
+                <div className="antialiased text-gray-800 h-screen w-screen overflow-hidden relative">
+                    {/* Background Image Logic */}
+                    {CONFIG.bgImage && (
+                        <div className="absolute inset-0 z-[-1] bg-cover bg-center opacity-20" style={{ backgroundImage: `url(${CONFIG.bgImage})` }}></div>
+                    )}
+
+                    {screen === 'splash' && <SplashScreen onStart={() => setScreen('menu')} />}
+                    {screen === 'menu' && <MenuScreen onNavigate={setScreen} audioEnabled={audioEnabled} toggleAudio={() => setAudioEnabled(!audioEnabled)} />}
+                    {screen === 'study' && <StudyScreen onBack={() => setScreen('menu')} />}
+                    {screen === 'catch' && <CatchGame onBack={() => setScreen('menu')} />}
+                    {screen === 'quiz' && <QuizScreen onBack={() => setScreen('menu')} />}
+                    {screen === 'order' && <OrderGame onBack={() => setScreen('menu')} />}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
